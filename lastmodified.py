@@ -5,10 +5,11 @@ from sklearn.cluster import KMeans, DBSCAN
 from sklearn.impute import KNNImputer
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, accuracy_score, classification_report
+from sklearn.metrics import mean_squared_error, accuracy_score, classification_report, confusion_matrix
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
+import seaborn as sns
 
 def load_df(file, header, separator):
     if header:
@@ -279,6 +280,10 @@ def main():
                 cluster_centers = kmeans.cluster_centers_
                 st.write("Cluster Centers:")
                 st.write(cluster_centers)
+                st.subheader("Cluster Centers Heatmap")
+                plt.figure(figsize=(10, 8))
+                sns.heatmap(cluster_centers, annot=True, cmap='coolwarm')
+                st.pyplot(plt)
             elif clustering_option == "DBSCAN":
                 unique_labels = set(df['Cluster'])
                 for label in unique_labels:
@@ -329,7 +334,12 @@ def main():
 
                     st.write("Confusion Matrix")
                     cm = confusion_matrix(y_test, y_pred)
-                    st.write(cm)
+                    plt.figure(figsize=(10, 8))
+                    sns.heatmap(cm, annot=True, fmt='d', cmap='coolwarm')
+                    plt.title('Confusion Matrix Heatmap')
+                    plt.xlabel('Predicted')
+                    plt.ylabel('Actual')
+                    st.pyplot(plt)
 
                     st.title("Prediction Evaluation 📚")
                     st.write("Classification Report:")
@@ -337,3 +347,10 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+#Ca je suis pas sure HEATMAP A FAIRE!!!!!!
+# Cluster Centers Heatmap in Clustering:
+#Added a heatmap to visualize the cluster centers when using KMeans.
+#Confusion Matrix Heatmap in Prediction:
+#Added a heatmap to visualize the confusion matrix for Logistic Regression.
