@@ -11,7 +11,6 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 import seaborn as sns
 
-
 def load_df(file, header, separator):
     if header:
         df = pd.read_csv(file, sep=separator)
@@ -25,14 +24,17 @@ def nan_to_remove_columns(df):
 def remove_nan(df):
     return df.dropna()
 
-def nan_to_mean(df):
-    return df.fillna(df.mean())
+def nan_to_mean(df, numerical_columns):
+    df[numerical_columns] = df[numerical_columns].apply(lambda x: x.fillna(x.mean()), axis=0)
+    return df
 
-def nan_to_mode(df):
-    return df.apply(lambda x: x.fillna(x.mode()[0]), axis=0)
+def nan_to_mode(df, numerical_columns):
+    df[numerical_columns] = df[numerical_columns].apply(lambda x: x.fillna(x.mode()[0]), axis=0)
+    return df
 
-def nan_to_med(df):
-    return df.fillna(df.median())
+def nan_to_med(df, numerical_columns):
+    df[numerical_columns] = df[numerical_columns].apply(lambda x: x.fillna(x.median()), axis=0)
+    return df
 
 def nan_to_knn_imputer(df, numerical_columns, n_neighbors=3):
     knn_imputer = KNNImputer(n_neighbors=n_neighbors)
@@ -124,11 +126,11 @@ def main():
         elif missing_values_option == "Remove Rows":
             df = remove_nan(df)
         elif missing_values_option == "Fill with Mean":
-            df = nan_to_mean(df)
+            df = nan_to_mean(df, numerical_columns)
         elif missing_values_option == "Fill with Mode":
-            df = nan_to_mode(df)
+            df = nan_to_mode(df, numerical_columns)
         elif missing_values_option == "Fill with Median":
-            df = nan_to_med(df)
+            df = nan_to_med(df, numerical_columns)
         elif missing_values_option == "KNN Imputer":
             df = nan_to_knn_imputer(df, numerical_columns)
       
@@ -349,9 +351,8 @@ def main():
 if __name__ == "__main__":
     main()
 
-
 #Ca je suis pas sure HEATMAP A FAIRE!!!!!!
 # Cluster Centers Heatmap in Clustering:
 #Added a heatmap to visualize the cluster centers when using KMeans.
 #Confusion Matrix Heatmap in Prediction:
-#Added a heatmap to visualize the confusion matrix for Logistic Regression DEUX SONT FAITS PERTINENTS ? JSP
+#Added a heatmap to visualize the confusion matrix for Logistic Regression.
