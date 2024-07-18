@@ -6,6 +6,7 @@ from sklearn.cluster import KMeans, DBSCAN
 from sklearn.impute import SimpleImputer, KNNImputer
 import matplotlib.pyplot as plt
 
+
 def load_data(file, header, separator):
     if header:
         data = pd.read_csv(file, sep=separator)
@@ -124,6 +125,70 @@ def main():
 
         st.write("Data after clustering:")
         st.write(data.head())
+
+    # Visualisation des données nettoyées
+    st.sidebar.subheader("Visualization")
+    st.write("## Visualisation")
+    st.write("### Visualisation des données nettoyées")
+
+    # Histogrammes des colonnes numériques
+    fig, ax = plt.subplots()
+    data.hist(bins=10, figsize=(10, 8), grid=True)
+    plt.suptitle('Histograms of Numerical Columns in DataFrame', fontsize=16)
+    st.pyplot(fig)
+
+    # Box plots des colonnes numériques
+    fig, ax = plt.subplots()
+    data.boxplot(column=numerical_columns, figsize=(10, 8))
+    plt.suptitle('Box Plots of Numerical Columns in DataFrame', fontsize=16)
+    st.pyplot(fig)
+
+    # Méthode du coude pour déterminer le nombre optimal de clusters
+    k_values = range(1, 11)
+    wcss = []
+
+    for k in k_values:
+        kmeans = KMeans(n_clusters=k, random_state=42)
+        kmeans.fit(data[numerical_columns])
+        wcss.append(kmeans.inertia_)
+
+    fig, ax = plt.subplots()
+    ax.plot(k_values, wcss, marker='o')
+    plt.title('Elbow Method For Optimal k')
+    plt.xlabel('Number of clusters')
+    plt.ylabel('WCSS')
+    plt.xticks(k_values)
+    st.pyplot(fig)
+
+    # Clustering avec KMeans
+    optimal_k = 3  # Remplacer par la valeur optimale trouvée
+    kmeans = KMeans(n_clusters=optimal_k, random_state=42)
+    data['Cluster'] = kmeans.fit_predict(data[numerical_columns])
+
+    # Visualisation 2D des clusters
+    fig, ax = plt.subplots()
+    scatter = ax.scatter(data.iloc[:, 0], data.iloc[:, 1], c=data['Cluster'], cmap='viridis')
+    legend1 = ax.legend(*scatter.legend_elements(), title="Clusters")
+    ax.add_artist(legend1)
+    plt.title('KMeans Clustering')
+    plt.xlabel(data.columns[0])
+    plt.ylabel(data.columns[1])
+    st.pyplot(fig)
+
+    # Visualisation 3D des clusters (si applicable)
+    chosen_params = ['A', 'B', 'C', 'D']  # Remplacer par les colonnes réelles
+    fig = plt.figure(figsize=(10, 7))
+    ax = fig.add_subplot(111, projection='3d')
+    scatter = ax.scatter(data[chosen_params[0]], data[chosen_params[1]], data[chosen_params[2]], 
+                        c=data['Cluster'], cmap='viridis', marker='o')
+    ax.set_title('KMeans Clustering')
+    ax.set_xlabel(chosen_params[0])
+    ax.set_ylabel(chosen_params[1])
+    ax.set_zlabel(chosen_params[2])
+    cbar = plt.colorbar(scatter, ax=ax)
+    cbar.set_label('Cluster')
+
+    st.pyplot(fig)
 
 if __name__ == "__main__":
     main()
