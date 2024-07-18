@@ -138,14 +138,33 @@ def main():
     # Histogrammes des colonnes numériques
     numerical_data = data.select_dtypes(include=[np.number])
     non_numerical_data = data.select_dtypes(include=[np.number])
-    if numerical_data.empty:
-        st.write("No numerical columns available to plot histograms.")
+    numerical_data = data.select_dtypes(include=[np.number])
+    non_numerical_columns = data.select_dtypes(exclude=['number']).columns
+
+    if numerical_data.empty and non_numerical_columns.empty:
+        st.write("No columns available to plot.")
     else:
-        st.write("Histograms of Numerical Columns in DataFrame:")
-        fig, axes = plt.subplots(figsize=(10, 6))
-        numerical_data.hist(bins=10, ax=axes, grid=True)
-        plt.suptitle('Histograms of Numerical Columns in DataFrame', fontsize=16)
-        st.pyplot(fig)
+        if not numerical_data.empty:
+            st.write("Histograms of Numerical Columns in DataFrame:")
+            fig, axes = plt.subplots(figsize=(10, 6))
+            numerical_data.hist(bins=10, ax=axes, grid=True)
+            plt.suptitle('Histograms of Numerical Columns in DataFrame', fontsize=16)
+            st.pyplot(fig)
+
+        if not non_numerical_columns.empty:
+            st.write("Bar Plots of Non-Numerical Columns in DataFrame:")
+            num_columns = len(non_numerical_columns)
+            fig, axes = plt.subplots(1, num_columns, figsize=(6 * num_columns, 6), squeeze=False)
+            axes = axes.flatten()  # Ensure axes is iterable
+
+            for ax, column in zip(axes, non_numerical_columns):
+                data[column].value_counts().plot(kind='bar', ax=ax, grid=True)
+                ax.set_title(f'Bar Plot of {column}', fontsize=16)
+                ax.set_xlabel(column)
+                ax.set_ylabel('Count')
+
+            plt.tight_layout()
+            st.pyplot(fig)
     # Box plots des colonnes numériques
     fig, ax = plt.subplots()
     data.boxplot(column=numerical_columns, figsize=(10, 8))
