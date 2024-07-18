@@ -78,6 +78,7 @@ def main():
         st.write(data.head())
 
         numerical_columns = [i for i in data.columns if data[i].dtype == "int64" or data[i].dtype == "float64"]
+        non_numerical_columns = [i for i in data.columns if data[i].dtype != "int64" and data[i].dtype != "float64"]
 
         # Handle missing values
         st.sidebar.subheader("Missing Values Handling")
@@ -136,6 +137,7 @@ def main():
 
     # Histogrammes des colonnes numériques
     numerical_data = data.select_dtypes(include=[np.number])
+    non_numerical_data = data.select_dtypes(include=[np.number])
     if numerical_data.empty:
         st.write("No numerical columns available to plot histograms.")
     else:
