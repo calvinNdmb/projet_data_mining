@@ -71,29 +71,60 @@ def plot_knn_distances(df, k):
     st.pyplot(plt)
 
 def main():
-    st.title("My Streamlit Page")
-    st.write("Welcome to my Streamlit page!")
+    st.title("INTERACTIVE WEB APPLICATION🖥️")
+    st.write("Analyze, clean, and visualize your data effectively with our advanced techniques !")
 
-    st.sidebar.title("Sidebar")
+    st.sidebar.title("DATA MINING PROJECT BIA2")
+    st.sidebar.markdown("### Calvin NDOUMBE - Faniry RAOBELINA - Léa SELLAHANNADI")
 
-    st.sidebar.header("Part 1")
-    uploaded_file = st.sidebar.file_uploader("Upload a CSV file", type=["csv"])
+    st.sidebar.header("Initial Data Exploration 🔍")
+    uploaded_file = st.sidebar.file_uploader("Upload your CSV file: ", type=["csv"])
+
     if uploaded_file:
         header = st.sidebar.checkbox("Does the file have a header?", value=True)
-        separator = st.sidebar.text_input("Separator", value=",")
+        separator = st.sidebar.text_input("Type of separation: ", value=",")
         df = load_df(uploaded_file, header, separator)
 
-        st.write("df Preview:")
-        st.write(df.head())
+        st.title("Data description 📋")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.write("Preview the first rows:")
+            st.write(df.head())
+        with col2:
+            st.write("Preview the last rows:")
+            st.write(df.tail())
+
+        st.title("Statistical summary 🔢")
+
+        st.write(f"Number of rows: {df.shape[0]}")
+        st.write(f"Number of columns: {df.shape[1]}")
+
+        col_types = pd.DataFrame(df.dtypes, columns=['Data Type']).reset_index()
+        col_types.columns = ['Column Name', 'Data Type']
+
+        missing_values = df.isnull().sum().reset_index()
+        missing_values.columns = ['Column Name', 'Missing Values']
+        summary_df = pd.merge(col_types, missing_values, on='Column Name')
+
+        st.write("Column names, data types and missing values per column: ")
+        st.write(summary_df)
+
+        st.write("Descriptive statistics: ")
+        st.write(df.describe())
 
         numerical_columns = [i for i in df.columns if df[i].dtype == "int64" or df[i].dtype == "float64"]
         non_numerical_columns = [i for i in df.columns if df[i].dtype != "int64" and df[i].dtype != "float64"]
 
-        st.sidebar.subheader("Missing Values Handling")
-        missing_values_option = st.sidebar.selectbox("Choose a method to handle missing values",
-                                                     ["Remove Columns", "Fill with Mean", "Fill with Mode", "Fill with Median", "KNN Imputer", "Remove Rows"])
+        st.sidebar.subheader("Data Pre-processing and Cleaning 🧼")
+        missing_values_option = st.sidebar.selectbox("Choose a method to handle missing values:",
+                                                     ["Remove Columns","Remove Rows", "Fill with Mean", "Fill with Mode", "Fill with Median", "KNN Imputer"])
+        
         if missing_values_option == "Remove Columns":
             df = nan_to_remove_columns(df)
+        elif missing_values_option == "Remove Rows":
+            df = remove_nan(df)
         elif missing_values_option == "Fill with Mean":
             df = nan_to_mean(df)
         elif missing_values_option == "Fill with Mode":
@@ -102,35 +133,33 @@ def main():
             df = nan_to_med(df)
         elif missing_values_option == "KNN Imputer":
             df = nan_to_knn_imputer(df, numerical_columns)
-        elif missing_values_option == "Remove Rows":
-            df = remove_nan(df)
-
-        st.write("df after handling missing values:")
+      
+        st.title("Managing missing values 🧹")
+        st.write("Dataframe after handling the missing values: ")
         st.write(df.head())
 
-        st.sidebar.subheader("Normalization/Standardization")
-        normalization_option = st.sidebar.selectbox("Choose a method",
+        st.sidebar.subheader("Normalization ⚖️")
+        normalization_option = st.sidebar.selectbox("Choose a method: ",
                                                     ["Min-Max Normalization", "Z-score Standardization", "None"])
         if normalization_option == "Min-Max Normalization":
             df = min_max_normalization(df, numerical_columns)
         elif normalization_option == "Z-score Standardization":
             df = zscore_standardization(df, numerical_columns)
 
-        st.write("df after normalization/standardization:")
+        st.title("Normalizing the data 📏")
+        st.write("Dataframe after data normalization: ")
         st.write(df.head())
 
-        st.sidebar.subheader("Clustering")
-        clustering_option = st.sidebar.selectbox("Choose a clustering method", ["KMeans", "DBSCAN"])
+        st.sidebar.subheader("Clustering 🌀") # aussi partie prédication à ajouter choisir clustering or prediction 
+        clustering_option = st.sidebar.selectbox("Choose a clustering method: ", ["KMeans", "DBSCAN"])
 
-        
-
-        st.write("df after clustering:")
+        st.title("Modeling the data 🔧")
+        st.write("Dataframe after clustering: ")
         st.write(df.head())
 
-        st.sidebar.subheader("Visualization")
-        st.write("## Visualisation")
-        st.write("### Visualisation des données nettoyées")
-
+        st.sidebar.subheader("Visualization 📊 ")
+        st.title("Visualisation 📈 ")
+      
         numerical_df = df.select_dtypes(include=[np.number])
         non_numerical_columns = df.select_dtypes(exclude=['number']).columns
 
@@ -138,43 +167,43 @@ def main():
             st.write("No columns available to plot.")
         else:
             if not numerical_df.empty:
-                st.write("Histograms of Numerical Columns in dfFrame:")
+                st.write("Histograms: ")
                 fig, axes = plt.subplots(figsize=(10, 6))
                 numerical_df.hist(bins=10, ax=axes, grid=True)
-                plt.suptitle('Histograms of Numerical Columns in dfFrame', fontsize=16)
+                plt.suptitle('Histograms of numerical columns of df', fontsize=16)
                 st.pyplot(fig)
 
             if not non_numerical_columns.empty:
-                st.write("Bar Plots of Non-Numerical Columns in dfFrame:")
+                st.write("Bar Plots:")
                 num_columns = len(non_numerical_columns)
                 fig, axes = plt.subplots(1, num_columns, figsize=(6 * num_columns, 6), squeeze=False)
                 axes = axes.flatten()
 
                 for ax, column in zip(axes, non_numerical_columns):
                     df[column].value_counts().plot(kind='bar', ax=ax, grid=True)
-                    ax.set_title(f'Bar Plot of {column}', fontsize=16)
+                    ax.set_title(f'Bar Plot of non-numerical column {column}', fontsize=16)
                     ax.set_xlabel(column)
                     ax.set_ylabel('Count')
 
                 plt.tight_layout()
                 st.pyplot(fig)
 
+        st.write("Box Plots: ")
         fig, ax = plt.subplots()
         df.boxplot(column=numerical_columns, figsize=(10, 8))
-        plt.suptitle('Box Plots of Numerical Columns in dfFrame', fontsize=16)
+        plt.suptitle('Box Plots of numerical columns in df', fontsize=16)
         st.pyplot(fig)
 
-        st.sidebar.subheader("Select Columns for Visualization")
         available_columns = numerical_columns  # only numerical columns for clustering visualization
 
-        selected_columns_2d = st.sidebar.multiselect("Select two columns for 2D visualization", available_columns, default=available_columns[:2])
-        selected_columns_3d = st.sidebar.multiselect("Select three columns for 3D visualization", available_columns, default=available_columns[:3])
+        selected_columns_2d = st.sidebar.multiselect("Select two columns for 2D visualization: ", available_columns, default=available_columns[:2])
+        selected_columns_3d = st.sidebar.multiselect("Select three columns for 3D visualization: ", available_columns, default=available_columns[:3])
         if clustering_option == "KMeans":
-            k = st.sidebar.slider("Select number of clusters for KMeans", 1, 10, 3)
+            k = st.sidebar.slider("Select number of clusters for KMeans: ", 1, 10, 3)
             kmeans = KMeans(n_clusters=k)
             df['Cluster'] = kmeans.fit_predict(df[numerical_columns])
-
-            st.sidebar.subheader("Elbow Method For Optimal k")
+            
+            st.title("Learning Evaluation 📚 ") # à changer peut etre
             k_values = range(1, 11)
             wcss = []
 
@@ -185,7 +214,7 @@ def main():
 
             fig, ax = plt.subplots()
             ax.plot(k_values, wcss, marker='o')
-            plt.title('Elbow Method For Optimal k')
+            plt.title('Elbow Method for optimal k')
             plt.xlabel('Number of clusters')
             plt.ylabel('WCSS')
             plt.xticks(k_values)
@@ -208,7 +237,7 @@ def main():
             plt.ylabel(selected_columns_2d[1])
             st.pyplot(fig)
         else:
-            st.write("Please select exactly two columns for 2D visualization.")
+            st.write("Please select exactly two columns for 2D visualization: ")
 
         if len(selected_columns_3d) == 3:
             fig = plt.figure(figsize=(10, 7))
