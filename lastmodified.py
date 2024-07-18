@@ -11,6 +11,7 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 import seaborn as sns
 
+
 def load_df(file, header, separator):
     if header:
         df = pd.read_csv(file, sep=separator)
@@ -353,4 +354,4 @@ if __name__ == "__main__":
 # Cluster Centers Heatmap in Clustering:
 #Added a heatmap to visualize the cluster centers when using KMeans.
 #Confusion Matrix Heatmap in Prediction:
-#Added a heatmap to visualize the confusion matrix for Logistic Regression.
+#Added a heatmap to visualize the confusion matrix for Logistic Regression DEUX SONT FAITS PERTINENTS ? JSP
