@@ -126,6 +126,8 @@ def main():
         st.write("Data after clustering:")
         st.write(data.head())
 
+    
+
     # Visualisation des données nettoyées
     st.sidebar.subheader("Visualization")
     st.write("## Visualisation")
@@ -165,30 +167,42 @@ def main():
     kmeans = KMeans(n_clusters=optimal_k, random_state=42)
     data['Cluster'] = kmeans.fit_predict(data[numerical_columns])
 
+    # Sélection des colonnes pour la visualisation
+    st.sidebar.subheader("Select Columns for Visualization")
+    available_columns = data.columns.tolist()
+
+    selected_columns_2d = st.sidebar.multiselect("Select two columns for 2D visualization", available_columns, default=available_columns[:2])
+    selected_columns_3d = st.sidebar.multiselect("Select three columns for 3D visualization", available_columns, default=available_columns[:3])
+
     # Visualisation 2D des clusters
-    fig, ax = plt.subplots()
-    scatter = ax.scatter(data.iloc[:, 0], data.iloc[:, 1], c=data['Cluster'], cmap='viridis')
-    legend1 = ax.legend(*scatter.legend_elements(), title="Clusters")
-    ax.add_artist(legend1)
-    plt.title('KMeans Clustering')
-    plt.xlabel(data.columns[0])
-    plt.ylabel(data.columns[1])
-    st.pyplot(fig)
+    if len(selected_columns_2d) == 2:
+        fig, ax = plt.subplots()
+        scatter = ax.scatter(data[selected_columns_2d[0]], data[selected_columns_2d[1]], c=data['Cluster'], cmap='viridis')
+        legend1 = ax.legend(*scatter.legend_elements(), title="Clusters")
+        ax.add_artist(legend1)
+        plt.title('KMeans Clustering')
+        plt.xlabel(selected_columns_2d[0])
+        plt.ylabel(selected_columns_2d[1])
+        st.pyplot(fig)
+    else:
+        st.write("Please select exactly two columns for 2D visualization.")
 
     # Visualisation 3D des clusters (si applicable)
-    chosen_params = ['A', 'B', 'C', 'D']  # Remplacer par les colonnes réelles
-    fig = plt.figure(figsize=(10, 7))
-    ax = fig.add_subplot(111, projection='3d')
-    scatter = ax.scatter(data[chosen_params[0]], data[chosen_params[1]], data[chosen_params[2]], 
-                        c=data['Cluster'], cmap='viridis', marker='o')
-    ax.set_title('KMeans Clustering')
-    ax.set_xlabel(chosen_params[0])
-    ax.set_ylabel(chosen_params[1])
-    ax.set_zlabel(chosen_params[2])
-    cbar = plt.colorbar(scatter, ax=ax)
-    cbar.set_label('Cluster')
+    if len(selected_columns_3d) == 3:
+        fig = plt.figure(figsize=(10, 7))
+        ax = fig.add_subplot(111, projection='3d')
+        scatter = ax.scatter(data[selected_columns_3d[0]], data[selected_columns_3d[1]], data[selected_columns_3d[2]], 
+                            c=data['Cluster'], cmap='viridis', marker='o')
+        ax.set_title('KMeans Clustering')
+        ax.set_xlabel(selected_columns_3d[0])
+        ax.set_ylabel(selected_columns_3d[1])
+        ax.set_zlabel(selected_columns_3d[2])
+        cbar = plt.colorbar(scatter, ax=ax)
+        cbar.set_label('Cluster')
+        st.pyplot(fig)
+    else:
+        st.write("Please select exactly three columns for 3D visualization.")
 
-    st.pyplot(fig)
 
 if __name__ == "__main__":
     main()
