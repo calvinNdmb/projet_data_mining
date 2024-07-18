@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans, DBSCAN
 from sklearn.impute import SimpleImputer, KNNImputer
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def load_data(file, header, separator):
@@ -134,11 +135,15 @@ def main():
     st.write("### Visualisation des données nettoyées")
 
     # Histogrammes des colonnes numériques
-    fig, ax = plt.subplots()
-    data.hist(bins=10, figsize=(10, 8), grid=True)
-    plt.suptitle('Histograms of Numerical Columns in DataFrame', fontsize=16)
-    st.pyplot(fig)
-
+    numerical_data = data.select_dtypes(include=[np.number])
+    if numerical_data.empty:
+        st.write("No numerical columns available to plot histograms.")
+    else:
+        st.write("Histograms of Numerical Columns in DataFrame:")
+        fig, axes = plt.subplots(figsize=(10, 6))
+        numerical_data.hist(bins=10, ax=axes, grid=True)
+        plt.suptitle('Histograms of Numerical Columns in DataFrame', fontsize=16)
+        st.pyplot(fig)
     # Box plots des colonnes numériques
     fig, ax = plt.subplots()
     data.boxplot(column=numerical_columns, figsize=(10, 8))
