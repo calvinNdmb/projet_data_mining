@@ -1,12 +1,11 @@
 import streamlit as st
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans, DBSCAN
-from sklearn.impute import SimpleImputer, KNNImputer
+from sklearn.impute import KNNImputer
 import matplotlib.pyplot as plt
 import numpy as np
-
+from sklearn.neighbors import NearestNeighbors
 
 def load_data(file, header, separator):
     if header:
@@ -32,8 +31,7 @@ def nan_to_mean(df):
 
 def nan_to_mode(df):
     for i in df.columns:
-        if df[i].dtype == "object":
-            df[i].fillna(df[i].mode()[0], inplace=True)
+        df[i].fillna(df[i].mode()[0], inplace=True)
     return df
 
 def nan_to_med(df):
@@ -61,6 +59,17 @@ def zscore_standardization(df, numerical_columns):
     df[numerical_columns] = scaler.fit_transform(df[numerical_columns])
     return df
 
+def plot_knn_distances(data, k):
+    nbrs = NearestNeighbors(n_neighbors=k).fit(data)
+    distances, indices = nbrs.kneighbors(data)
+    distances = np.sort(distances[:, k-1], axis=0)
+    plt.figure(figsize=(10, 6))
+    plt.plot(distances)
+    plt.title('k-NN Distance Graph')
+    plt.xlabel('Data Points sorted by distance')
+    plt.ylabel(f'{k}-NN Distance')
+    st.pyplot(plt)
+
 def main():
     st.title("My Streamlit Page")
     st.write("Welcome to my Streamlit page!")
@@ -80,7 +89,6 @@ def main():
         numerical_columns = [i for i in data.columns if data[i].dtype == "int64" or data[i].dtype == "float64"]
         non_numerical_columns = [i for i in data.columns if data[i].dtype != "int64" and data[i].dtype != "float64"]
 
-        # Handle missing values
         st.sidebar.subheader("Missing Values Handling")
         missing_values_option = st.sidebar.selectbox("Choose a method to handle missing values",
                                                      ["Remove Columns", "Fill with Mean", "Fill with Mode", "Fill with Median", "KNN Imputer", "Remove Rows"])
@@ -100,7 +108,6 @@ def main():
         st.write("Data after handling missing values:")
         st.write(data.head())
 
-        # Normalize or standardize data
         st.sidebar.subheader("Normalization/Standardization")
         normalization_option = st.sidebar.selectbox("Choose a method",
                                                     ["Min-Max Normalization", "Z-score Standardization", "None"])
@@ -112,123 +119,111 @@ def main():
         st.write("Data after normalization/standardization:")
         st.write(data.head())
 
-        # Clustering
         st.sidebar.subheader("Clustering")
         clustering_option = st.sidebar.selectbox("Choose a clustering method", ["KMeans", "DBSCAN"])
-        if clustering_option == "KMeans":
-            k = st.sidebar.slider("Select number of clusters for KMeans", 1, 10, 3)
-            kmeans = KMeans(n_clusters=k)
-            data['Cluster'] = kmeans.fit_predict(data[numerical_columns])
-        elif clustering_option == "DBSCAN":
-            eps = st.sidebar.slider("Select epsilon for DBSCAN", 0.1, 1.0, 0.3)
-            min_samples = st.sidebar.slider("Select min_samples for DBSCAN", 1, 10, 2)
-            dbscan = DBSCAN(eps=eps, min_samples=min_samples)
-            data['Cluster'] = dbscan.fit_predict(data[numerical_columns])
+
+        
 
         st.write("Data after clustering:")
         st.write(data.head())
 
-    
+        st.sidebar.subheader("Visualization")
+        st.write("## Visualisation")
+        st.write("### Visualisation des données nettoyées")
 
-    # Visualisation des données nettoyées
-    st.sidebar.subheader("Visualization")
-    st.write("## Visualisation")
-    st.write("### Visualisation des données nettoyées")
+        numerical_data = data.select_dtypes(include=[np.number])
+        non_numerical_columns = data.select_dtypes(exclude=['number']).columns
 
-    # Histogrammes des colonnes numériques
-    numerical_data = data.select_dtypes(include=[np.number])
-    non_numerical_data = data.select_dtypes(include=[np.number])
-    numerical_data = data.select_dtypes(include=[np.number])
-    non_numerical_columns = data.select_dtypes(exclude=['number']).columns
+        if numerical_data.empty and non_numerical_columns.empty:
+            st.write("No columns available to plot.")
+        else:
+            if not numerical_data.empty:
+                st.write("Histograms of Numerical Columns in DataFrame:")
+                fig, axes = plt.subplots(figsize=(10, 6))
+                numerical_data.hist(bins=10, ax=axes, grid=True)
+                plt.suptitle('Histograms of Numerical Columns in DataFrame', fontsize=16)
+                st.pyplot(fig)
 
-    if numerical_data.empty and non_numerical_columns.empty:
-        st.write("No columns available to plot.")
-    else:
-        if not numerical_data.empty:
-            st.write("Histograms of Numerical Columns in DataFrame:")
-            fig, axes = plt.subplots(figsize=(10, 6))
-            numerical_data.hist(bins=10, ax=axes, grid=True)
-            plt.suptitle('Histograms of Numerical Columns in DataFrame', fontsize=16)
-            st.pyplot(fig)
+            if not non_numerical_columns.empty:
+                st.write("Bar Plots of Non-Numerical Columns in DataFrame:")
+                num_columns = len(non_numerical_columns)
+                fig, axes = plt.subplots(1, num_columns, figsize=(6 * num_columns, 6), squeeze=False)
+                axes = axes.flatten()
 
-        if not non_numerical_columns.empty:
-            st.write("Bar Plots of Non-Numerical Columns in DataFrame:")
-            num_columns = len(non_numerical_columns)
-            fig, axes = plt.subplots(1, num_columns, figsize=(6 * num_columns, 6), squeeze=False)
-            axes = axes.flatten()  # Ensure axes is iterable
+                for ax, column in zip(axes, non_numerical_columns):
+                    data[column].value_counts().plot(kind='bar', ax=ax, grid=True)
+                    ax.set_title(f'Bar Plot of {column}', fontsize=16)
+                    ax.set_xlabel(column)
+                    ax.set_ylabel('Count')
 
-            for ax, column in zip(axes, non_numerical_columns):
-                data[column].value_counts().plot(kind='bar', ax=ax, grid=True)
-                ax.set_title(f'Bar Plot of {column}', fontsize=16)
-                ax.set_xlabel(column)
-                ax.set_ylabel('Count')
+                plt.tight_layout()
+                st.pyplot(fig)
 
-            plt.tight_layout()
-            st.pyplot(fig)
-    # Box plots des colonnes numériques
-    fig, ax = plt.subplots()
-    data.boxplot(column=numerical_columns, figsize=(10, 8))
-    plt.suptitle('Box Plots of Numerical Columns in DataFrame', fontsize=16)
-    st.pyplot(fig)
-
-    # Méthode du coude pour déterminer le nombre optimal de clusters
-    k_values = range(1, 11)
-    wcss = []
-
-    for k in k_values:
-        kmeans = KMeans(n_clusters=k, random_state=42)
-        kmeans.fit(data[numerical_columns])
-        wcss.append(kmeans.inertia_)
-
-    fig, ax = plt.subplots()
-    ax.plot(k_values, wcss, marker='o')
-    plt.title('Elbow Method For Optimal k')
-    plt.xlabel('Number of clusters')
-    plt.ylabel('WCSS')
-    plt.xticks(k_values)
-    st.pyplot(fig)
-
-    # Clustering avec KMeans
-    optimal_k = 3  # Remplacer par la valeur optimale trouvée
-    kmeans = KMeans(n_clusters=optimal_k, random_state=42)
-    data['Cluster'] = kmeans.fit_predict(data[numerical_columns])
-
-    # Sélection des colonnes pour la visualisation
-    st.sidebar.subheader("Select Columns for Visualization")
-    available_columns = data.columns.tolist()
-
-    selected_columns_2d = st.sidebar.multiselect("Select two columns for 2D visualization", available_columns, default=available_columns[:2])
-    selected_columns_3d = st.sidebar.multiselect("Select three columns for 3D visualization", available_columns, default=available_columns[:3])
-
-    # Visualisation 2D des clusters
-    if len(selected_columns_2d) == 2:
         fig, ax = plt.subplots()
-        scatter = ax.scatter(data[selected_columns_2d[0]], data[selected_columns_2d[1]], c=data['Cluster'], cmap='viridis')
-        legend1 = ax.legend(*scatter.legend_elements(), title="Clusters")
-        ax.add_artist(legend1)
-        plt.title('KMeans Clustering')
-        plt.xlabel(selected_columns_2d[0])
-        plt.ylabel(selected_columns_2d[1])
+        data.boxplot(column=numerical_columns, figsize=(10, 8))
+        plt.suptitle('Box Plots of Numerical Columns in DataFrame', fontsize=16)
         st.pyplot(fig)
-    else:
-        st.write("Please select exactly two columns for 2D visualization.")
 
-    # Visualisation 3D des clusters (si applicable)
-    if len(selected_columns_3d) == 3:
-        fig = plt.figure(figsize=(10, 7))
-        ax = fig.add_subplot(111, projection='3d')
-        scatter = ax.scatter(data[selected_columns_3d[0]], data[selected_columns_3d[1]], data[selected_columns_3d[2]], 
-                            c=data['Cluster'], cmap='viridis', marker='o')
-        ax.set_title('KMeans Clustering')
-        ax.set_xlabel(selected_columns_3d[0])
-        ax.set_ylabel(selected_columns_3d[1])
-        ax.set_zlabel(selected_columns_3d[2])
-        cbar = plt.colorbar(scatter, ax=ax)
-        cbar.set_label('Cluster')
-        st.pyplot(fig)
-    else:
-        st.write("Please select exactly three columns for 3D visualization.")
+        st.sidebar.subheader("Select Columns for Visualization")
+        available_columns = numerical_columns  # only numerical columns for clustering visualization
 
+        selected_columns_2d = st.sidebar.multiselect("Select two columns for 2D visualization", available_columns, default=available_columns[:2])
+        selected_columns_3d = st.sidebar.multiselect("Select three columns for 3D visualization", available_columns, default=available_columns[:3])
+        if clustering_option == "KMeans":
+            k = st.sidebar.slider("Select number of clusters for KMeans", 1, 10, 3)
+            kmeans = KMeans(n_clusters=k)
+            data['Cluster'] = kmeans.fit_predict(data[numerical_columns])
+
+            st.sidebar.subheader("Elbow Method For Optimal k")
+            k_values = range(1, 11)
+            wcss = []
+
+            for k in k_values:
+                kmeans = KMeans(n_clusters=k, random_state=42)
+                kmeans.fit(data[numerical_columns])
+                wcss.append(kmeans.inertia_)
+
+            fig, ax = plt.subplots()
+            ax.plot(k_values, wcss, marker='o')
+            plt.title('Elbow Method For Optimal k')
+            plt.xlabel('Number of clusters')
+            plt.ylabel('WCSS')
+            plt.xticks(k_values)
+            st.pyplot(fig)
+
+        elif clustering_option == "DBSCAN":
+            st.sidebar.write("Choose `eps` value by examining the k-NN distance graph.")
+            k = st.sidebar.slider("Select number of nearest neighbors (k)", 1, 10, 4)
+            plot_knn_distances(data[numerical_columns], k=k)
+            eps = st.sidebar.slider("Select epsilon for DBSCAN", 0.1, 1.0, 0.3)
+            min_samples = st.sidebar.slider("Select min_samples for DBSCAN", 1, 10, 2)
+            dbscan = DBSCAN(eps=eps, min_samples=min_samples)
+            data['Cluster'] = dbscan.fit_predict(data[numerical_columns])
+        if len(selected_columns_2d) == 2:
+            fig, ax = plt.subplots()
+            scatter = ax.scatter(data[selected_columns_2d[0]], data[selected_columns_2d[1]], c=data['Cluster'], cmap='viridis')
+            legend1 = ax.legend(*scatter.legend_elements(), title="Clusters")
+            plt.title('Clustering')
+            plt.xlabel(selected_columns_2d[0])
+            plt.ylabel(selected_columns_2d[1])
+            st.pyplot(fig)
+        else:
+            st.write("Please select exactly two columns for 2D visualization.")
+
+        if len(selected_columns_3d) == 3:
+            fig = plt.figure(figsize=(10, 7))
+            ax = fig.add_subplot(111, projection='3d')
+            scatter = ax.scatter(data[selected_columns_3d[0]], data[selected_columns_3d[1]], data[selected_columns_3d[2]], 
+                                c=data['Cluster'], cmap='viridis', marker='o')
+            ax.set_title('Clustering')
+            ax.set_xlabel(selected_columns_3d[0])
+            ax.set_ylabel(selected_columns_3d[1])
+            ax.set_zlabel(selected_columns_3d[2])
+            cbar = plt.colorbar(scatter, ax=ax)
+            cbar.set_label('Cluster')
+            st.pyplot(fig)
+        else:
+            st.write("Please select exactly three columns for 3D visualization.")
 
 if __name__ == "__main__":
     main()
