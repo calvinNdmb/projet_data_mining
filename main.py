@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, LabelEncoder
 from sklearn.cluster import KMeans, DBSCAN
 from sklearn.impute import KNNImputer
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -109,7 +109,7 @@ def main():
     st.sidebar.markdown("### Calvin NDOUMBE - Faniry RAOBELINA - Léa SELLAHANNADI")
 
     st.sidebar.header("Initial Data Exploration 🔍")
-    uploaded_file = st.sidebar.file_uploader("Upload your CSV file: ", type=["csv","data"])
+    uploaded_file = st.sidebar.file_uploader("Upload your CSV file: ", type=["csv", "data"])
 
     if uploaded_file:
         header = st.sidebar.checkbox("Does the file have a header?", value=True)
@@ -150,7 +150,7 @@ def main():
 
         st.sidebar.subheader("Data Pre-processing and Cleaning 🧼")
         missing_values_option = st.sidebar.selectbox("Choose a method to handle missing values:",
-                                                     ["Remove Columns","Remove Rows", "Fill with Mean", "Fill with Mode", "Fill with Median", "KNN Imputer"])
+                                                     ["Remove Columns", "Remove Rows", "Fill with Mean", "Fill with Mode", "Fill with Median", "KNN Imputer"])
         
         if missing_values_option == "Remove Columns":
             df = nan_to_remove_columns(df)
@@ -236,6 +236,21 @@ def main():
                 st.pyplot(fig)
             else:
                 st.write("Please select columns for bar plots.")
+        
+        # Correlation matrix
+        st.sidebar.subheader("Correlation Matrix 📉")
+        if st.sidebar.checkbox("Show Correlation Matrix"):
+            st.title("Correlation Matrix 📉")
+            # Encode categorical variables if any
+            for col in non_numerical_columns:
+                if df[col].dtype == 'object':
+                    le = LabelEncoder()
+                    df[col] = le.fit_transform(df[col])
+            corr_matrix = df.corr()
+            plt.figure(figsize=(12, 8))
+            sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+            plt.title("Correlation Matrix")
+            st.pyplot(plt)
 
         st.sidebar.subheader("Clustering or Prediction")
         task_option = st.sidebar.selectbox("Choose a task:", ["Clustering", "Prediction"])
