@@ -4,3 +4,4 @@ numpy
 streamlit
 ipykernel
 matplotlib
+seaborn 
