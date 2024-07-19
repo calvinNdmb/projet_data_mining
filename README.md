@@ -39,6 +39,4 @@ Sélectionner venv et choisir d'installer "requirements.txt"
 ```bash
     pip install -r requirements.txt
 ```
-
-Petit [video](https://youtu.be/i_23KUAEtUM?si=HyCoIW_VnLtlgVEW) qui peut aider ^^'
-En cas de question hésitez pas à me demander 😅
+Vous pouvez regarder la video explication.mp4 pour comprendre les fonctionnalités
