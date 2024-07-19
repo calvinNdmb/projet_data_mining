@@ -351,7 +351,7 @@ def main():
 if __name__ == "__main__":
     main()
 
-#Ca je suis pas sure HEATMAP A FAIRE!!!!!!
+#Ca je suis pas sure HEATMAP A FAIRE!!!
 # Cluster Centers Heatmap in Clustering:
 #Added a heatmap to visualize the cluster centers when using KMeans.
 #Confusion Matrix Heatmap in Prediction:
