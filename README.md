@@ -39,4 +39,6 @@ Sélectionner venv et choisir d'installer "requirements.txt"
 ```bash
     pip install -r requirements.txt
 ```
+
+(le code a utiliser est main.py)
 Vous pouvez regarder la video explication.mp4 pour comprendre les fonctionnalités
